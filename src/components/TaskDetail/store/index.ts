@@ -136,8 +136,12 @@ export const getAllTaskDetail = async (params?: TypeGetAll, isConnectedInternet?
       const data = await taskApi.getAllObject(params);
 
       const result = data.data.object_task.map((item: any) => {
-
-        const countNG = item.standard_task.filter(it => it.process === "ng").length;
+        const countNG = item.standard_task
+          .filter(it => it.process === "ng")
+          .reduce((total, obj) => {
+            const value = parseFloat(obj.count_ng); // hoặc parseInt nếu chỉ cần số nguyên
+            return total + (isNaN(value) ? 0 : value);
+          }, 0);
 
         return {
           id: item.id,
@@ -146,7 +150,7 @@ export const getAllTaskDetail = async (params?: TypeGetAll, isConnectedInternet?
           name: item.objects.name,
           position: item.objects.position,
           manage: item.objects.manage,
-          ng: countNG ? `${countNG}/${item.standard_task.length}` : "",
+          ng: countNG ? `${countNG}` : "",
           stt: item.objects.stt
         };
       });
@@ -180,8 +184,8 @@ export const getAllTaskDetail = async (params?: TypeGetAll, isConnectedInternet?
             o.stt,
             o.name,
             o.id AS object_id,
-            (
-                SELECT COUNT(*) 
+           (
+                SELECT COALESCE(SUM(dt.count_ng), 0)
                 FROM detail_task dt 
                 WHERE dt.object_task_id = ob.id AND dt.process = 'ng'
             ) AS ng,
@@ -203,7 +207,7 @@ export const getAllTaskDetail = async (params?: TypeGetAll, isConnectedInternet?
 
 
       taskDetailStore.merge({
-        data: data.map((item: any) => { return { ...item, ng: item.ng ? `${item.ng}/${item.total}` : "" } }),
+        data: data.map((item: any) => { return { ...item, ng: item.ng ? `${item.ng}` : "" } }),
         page: params?.page,
         pageSize: params?.pageSize,
       });

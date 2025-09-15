@@ -133,6 +133,7 @@ export const updateTaskObjectDetail = async (
             `Update detail_task set process = '${item.process ? item.process : ""
             }', mobile_path = '${item.mobile_path ? item.mobile_path : ""
             }', checker = '${item.checker ? item.checker : ""}', note = '${item.note ? item.note : ""
+            }', count_ng = '${item.count_ng ? item.count_ng : ""
             }', status='pending-update' where id='${item.id}';`
           );
         });
@@ -278,6 +279,7 @@ export const getAllTaskObjectDetail = async (
           dt.mobile_path,
           dt.note,
           dt.process,
+          dt.count_ng,
           dt.checker,
           s.content,
           s.content_method,
@@ -296,6 +298,8 @@ export const getAllTaskObjectDetail = async (
         args as any
       );
 
+      console.log("==================", data);
+      
       taskObjectDetailStore.merge({
         data: data,
         pic: data[0].pic || "",

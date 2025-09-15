@@ -43,6 +43,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { countCompleteTask } from "@utils/common";
 import { createListGroupObject } from "@components/GroupObject/store";
 import TienDoTag from "@components/TienDoTag";
+import ProcessTag from "@components/ProcessTag";
 const initData: TypeTask = {
   id: 0,
   name: "",
@@ -414,6 +415,9 @@ const Task: React.FC<Props> = ({ routeToDetail }) => {
                   <DataTable.Title style={styles.center}>
                     Tiến độ
                   </DataTable.Title>
+                  <DataTable.Title style={styles.center}>
+                    NG
+                  </DataTable.Title>
                   <DataTable.Title style={styles.center} onPress={() => handleSort("creator")}>
                     Người tạo {sortColumn === "creator" && (sortAscending ? " ▲" : " ▼")}
                   </DataTable.Title>
@@ -440,6 +444,9 @@ const Task: React.FC<Props> = ({ routeToDetail }) => {
                     </DataTable.Cell>
                     <DataTable.Cell style={styles.cell}>
                       <TienDoTag status={item.process || ""} />
+                    </DataTable.Cell>
+                    <DataTable.Cell style={styles.cell}>
+                      {item.totalNG && <ProcessTag status={item.totalNG} />}
                     </DataTable.Cell>
                     <DataTable.Cell style={styles.cell}>
                       <Text>

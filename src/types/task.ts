@@ -8,6 +8,7 @@ export type TypeTask = {
   name: string;
   position?: string;
   process?: string;
+  totalNG?: string;
   creator?: string;
   pic?: string;
   worker?: string;

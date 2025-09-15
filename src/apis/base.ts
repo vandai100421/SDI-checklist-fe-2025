@@ -3,7 +3,7 @@ import { isWeb } from "@utils/deviceInfo";
 import axios from "axios";
 import qs from "qs";
 
-const DEFAULT_IP = "http://172.20.10.3:3001/api";
+const DEFAULT_IP = "http://192.168.0.109:3001/api";
 
 // Create a function to get the access token from localStorage
 const getAccessToken = async () => {

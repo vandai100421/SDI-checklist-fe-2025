@@ -359,7 +359,7 @@ export const createListDetailTask = async (data: any) => {
       useNewConnection: true,
     });
     const insertDetail_TaskPrepare = await db.prepareAsync(
-      "INSERT INTO `detail_task` (id, standard_id, object_task_id, process, mobile_path, image, note ) VALUES ($id, $standard_id, $object_task_id, $process, $mobile_path, $image, $note);"
+      "INSERT INTO `detail_task` (id, standard_id, object_task_id, process, mobile_path, image, note, count_ng ) VALUES ($id, $standard_id, $object_task_id, $process, $mobile_path, $image, $note, $count_ng);"
     );
     await Promise.all(
       data.map((item: any) => {
@@ -371,10 +371,13 @@ export const createListDetailTask = async (data: any) => {
           $mobile_path: item.mobile_path,
           $image: item.image,
           $note: item.note,
+          $count_ng: item.count_ng,
         } as any);
       })
     );
   } catch (e) {
+    console.error('e', e);
+
     console.log("error detail task");
   }
 };
@@ -440,12 +443,21 @@ export const getAllTask = async (
       const data = await taskApi.getAll();
 
       const results = data.data.map((item: any) => {
-        const numOfObjs = item.object_task.length;
-
-        const numOfCompleted = countCompletedTasks(item.object_task);
+        const totalNG = item.object_task
+          .reduce((total, obj) => {
+            // Tính tổng count_ng trong standard_task có process === 'ng' cho mỗi object_task
+            const sumNG = obj.standard_task
+              .filter(item => item.process === "ng")
+              .reduce((sum, item) => {
+                const value = parseFloat(item.count_ng); // Chuyển count_ng thành số
+                return sum + (isNaN(value) ? 0 : value); // Xử lý NaN hoặc giá trị không hợp lệ
+              }, 0);
+            return total + sumNG;
+          }, 0);
 
         return {
           ...item,
+          totalNG
         };
       });
 
@@ -470,16 +482,24 @@ export const getAllTask = async (
         data = await db.getAllAsync(`
             SELECT
                   t.*
-              FROM
-                  task t
+              ,
+               SUM(CASE WHEN st.process = 'ng' THEN st.count_ng ELSE 0 END) AS totalNG
+              FROM task t
+              LEFT JOIN object_task ot ON ot.task_id = t.id
+              LEFT JOIN detail_task st ON st.object_task_id = ot.id
+              GROUP BY t.id;
             `);
       } else
         data = await db.getAllAsync(`
             SELECT
                   t.*
-              FROM
-                  task t
-            WHERE name like '%${params?.name}%'
+              ,
+               SUM(CASE WHEN st.process = 'ng' THEN st.count_ng ELSE 0 END) AS totalNG
+              FROM task t
+              LEFT JOIN object_task ot ON ot.task_id = t.id
+              LEFT JOIN detail_task st ON st.object_task_id = ot.id
+              GROUP BY t.id
+            WHERE t.name like '%${params?.name}%'
             `);
 
       taskStore.merge({
