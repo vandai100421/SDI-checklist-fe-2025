@@ -19,6 +19,7 @@ import { COLORS } from "@config";
 import { styles } from "@/src/styles/styles";
 import { globalMessage } from "@components/Lib/GlobalMessage";
 import { clearAuth } from "@utils/common";
+import SyncImages from "@components/Test";
 
 interface IFormErrors {
   username?: string;
@@ -64,9 +65,11 @@ const Login: FC<Props> = ({ changeToHomePage }) => {
         return;
       } catch (error) {
         console.error(error);
-        globalMessage.show("Thông báo", "Đăng nhập thất bại. Vui lòng đăng thử lại");
+        globalMessage.show(
+          "Thông báo",
+          "Đăng nhập thất bại. Vui lòng đăng thử lại"
+        );
       }
-
 
       await initializeDatabase();
       const db = await SQLite.openDatabaseAsync("sdi-checklist.db");
@@ -75,15 +78,13 @@ const Login: FC<Props> = ({ changeToHomePage }) => {
         `SELECT * FROM User WHERE username = '${value.username}' and password ='${value.password}';`
       );
 
-
       if (firstRow) {
         AsyncStorage.setItem("username", value.username);
         AsyncStorage.setItem("password", value.password);
         // AsyncStorage.setItem("accessToken", data.data.accessToken);
 
         changeToHomePage();
-      }
-      else showDialog();
+      } else showDialog();
     } else {
       try {
         const data = await authApi.login({
@@ -125,6 +126,7 @@ const Login: FC<Props> = ({ changeToHomePage }) => {
 
   return (
     <ScrollView>
+      <SyncImages />
       {!isRegister ? (
         <View style={styles.container}>
           <View style={styles.wrapBox}>

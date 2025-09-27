@@ -46,7 +46,9 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-file-system",
+      "expo-media-library"
     ],
     "experiments": {
       "typedRoutes": true

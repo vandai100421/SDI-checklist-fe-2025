@@ -29,6 +29,7 @@ import { clearAuth, showMessage } from "@utils/common";
 import { useHookstate } from "@hookstate/core";
 import { loginStore, checkHealth } from "@components/Home/store";
 import CustomRadioButton from "@/components/RadioGroupButton";
+import SyncImages from "@components/Test";
 
 interface IFormErrors {
   username?: string;
@@ -193,6 +194,8 @@ export default function ({
               backgroundColor: isDarkmode ? themeColor.dark : themeColor.white,
             }}
           >
+
+            <SyncImages />
             <View
               style={{ width: !isWeb ? "100%" : 400, marginHorizontal: "auto" }}
             >
