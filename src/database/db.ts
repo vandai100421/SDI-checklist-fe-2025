@@ -23,6 +23,8 @@ import {
 } from "@components/Task/store/sql";
 import * as SQLite from "expo-sqlite";
 import { Alert } from "react-native";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 
 export const initializeDatabase = async () => {
   const db = await SQLite.openDatabaseAsync("sdi-checklist.db", {
@@ -166,4 +168,61 @@ export const deleteDatabase = async () => {
     console.log("error", error);
   }
 };
+
+export const deleteDatabase2 = async () => {
+  try {
+    const dbName = "sdi-checklist.db";
+    const dbPath = `${FileSystem.documentDirectory}SQLite/${dbName}`;
+
+    const info = await FileSystem.getInfoAsync(dbPath);
+    if (info.exists) {
+      await FileSystem.deleteAsync(dbPath, { idempotent: true });
+      console.log("✅ Đã xóa toàn bộ database:", dbPath);
+      await clearMediaLibraryAlbum();
+      await clearAllLocalFiles();
+
+    } else {
+      console.log("⚠️ Database không tồn tại:", dbPath);
+    }
+  } catch (error) {
+    console.error("❌ Lỗi khi xóa database:", error);
+  }
+};
+
+export async function clearAllLocalFiles() {
+  try {
+    const files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory || "");
+
+    for (const file of files) {
+      const filePath = FileSystem.documentDirectory + file;
+      await FileSystem.deleteAsync(filePath, { idempotent: true });
+    }
+
+    console.log("✅ Đã xóa toàn bộ file trong documentDirectory");
+  } catch (err) {
+    console.error("❌ Lỗi khi xóa file:", err);
+  }
+}
+
+
+
+export async function clearMediaLibraryAlbum() {
+  try {
+    const album = await MediaLibrary.getAlbumAsync("SDI-Checklist");
+    if (album) {
+      const assets = await MediaLibrary.getAssetsAsync({ album: album });
+      const assetIds = assets.assets.map((a) => a.id);
+
+      if (assetIds.length > 0) {
+        await MediaLibrary.deleteAssetsAsync(assetIds);
+        console.log(`✅ Đã xóa ${assetIds.length} ảnh trong album SDI-Checklist`);
+      }
+    } else {
+      console.log("⚠️ Không tìm thấy album SDI-Checklist");
+    }
+  } catch (err) {
+    console.error("❌ Lỗi khi xóa MediaLibrary:", err);
+  }
+}
+
 export default initializeDatabase;

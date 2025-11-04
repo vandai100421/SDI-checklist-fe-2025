@@ -16,12 +16,15 @@ import taskStore, {
   createListChecklistTask,
 } from "../components/Task/store";
 import * as SQLite from "expo-sqlite";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import initializeDatabase from "../database/db";
 import { createListCheckList } from "@components/Checklist/store";
 import { createListGroupObject } from "@components/GroupObject/store";
 import { createListObject } from "@components/Object/store";
 import { createListUser } from "@components/User/store";
 import { createListStandard } from "@components/TaskDetail/store";
+import { getBaseURL } from "../apis/base";
 
 export function isArrayCompleted(array: any) {
   if (array.length) {
@@ -132,35 +135,238 @@ export const asyncAllData = async () => {
     const db = await SQLite.openDatabaseAsync("sdi-checklist.db", {
       useNewConnection: true,
     });
-    const data2: any = await db.getAllAsync("SELECT * FROM checklist_task");
-    await db.runAsync("DELETE FROM checklist_task");
-    await db.runAsync("DELETE FROM detail_task");
-    await db.runAsync("DELETE FROM object_task");
-    await db.runAsync("DELETE FROM standard");
-    await db.runAsync("DELETE FROM object");
-    await db.runAsync("DELETE FROM GroupObject");
-    await db.runAsync("DELETE FROM checklist");
-    await db.runAsync("DELETE FROM task");
-    await db.runAsync("DELETE FROM user");
+
+    // Xóa dữ liệu cũ
+    const tables = [
+      "checklist_task",
+      "detail_task",
+      "object_task",
+      "standard",
+      "object",
+      "GroupObject",
+      "checklist",
+      "task",
+      "user",
+    ];
+    for (const table of tables) {
+      await db.runAsync(`DELETE FROM ${table}`);
+    }
+
+    // Gọi API lấy dữ liệu
     const res: any = await getAllData();
+    const {
+      check_list,
+      group_object,
+      object,
+      task,
+      users,
+      standard,
+      object_task,
+      standard_task,
+      checklist_task,
+    } = res.data;
 
-    // console.log(res.data.object);
+    // Tạo dữ liệu mới
+    await createListCheckList(check_list);
+    await createListGroupObject(group_object);
+    await createListObject(object);
+    await createListTask(task);
+    await createListUser(users);
+    await createListStandard(standard);
+    await createListObjectTask(object_task);
+    await createListDetailTask(standard_task);
+    await createListChecklistTask(checklist_task);
 
-    await createListCheckList(res.data.check_list);
-    await createListGroupObject(res.data.group_object);
-    await createListObject(res.data.object);
-    await createListTask(res.data.task);
-    await createListUser(res.data.users);
-    await createListStandard(res.data.standard);
-    await createListObjectTask(res.data.object_task);
-    await createListDetailTask(res.data.standard_task);
-    await createListChecklistTask(res.data.checklist_task);
-    showMessage("Đồng bộ dữ liệu thành công. Toàn bộ dữ liệu đã được sao lưu về máy.");
-    // await createListStandard(res.data.standard)
-    // await createListObject(res.object)
+    // ==============================
+    // 🖼️ Xử lý tải ảnh và PDF
+    // ==============================
+    await handleMediaSync(db, standard_task, object_task);
+
+    showMessage("✅ Đồng bộ dữ liệu và file thành công.");
   } catch (e: any) {
-    showMessage("Đồng bộ thất bại\n" + e.responses.massage);
+    console.error(e);
+    showMessage("❌ Đồng bộ thất bại: " + (e.message || "Lỗi không xác định"));
   }
+};
+
+// export const handleMediaSync = async (db: any, standard_task: any[], object_task: any[]) => {
+//   try {
+//     // ✅ 1. Kiểm tra quyền lưu file vào thư viện chỉ 1 lần duy nhất
+//     let { status } = await MediaLibrary.getPermissionsAsync();
+//     if (status !== "granted") {
+//       const permission = await MediaLibrary.requestPermissionsAsync();
+//       status = permission.status;
+//     }
+//     if (status !== "granted") {
+//       showMessage("❌ Không có quyền truy cập thư viện ảnh. Không thể lưu ảnh.");
+//       return;
+//     }
+
+//     // ==============================
+//     // 🖼️ TẢI ẢNH → LƯU VÀO THƯ VIỆN
+//     // ==============================
+//     const imagePromises = standard_task
+//       .filter((item) => !!item.image)
+//       .map(async (item) => {
+//         try {
+//           const fullUrl = await getFullUrl(item.image);
+//           const filename = item.image.split("/").pop();
+//           const localPath = `${FileSystem.documentDirectory}${filename}`;
+
+//           // 🔹 Kiểm tra nếu file đã tồn tại -> bỏ qua
+//           const fileInfo = await FileSystem.getInfoAsync(localPath);
+//           let _uri: string
+//           if (!fileInfo.exists) {
+//             console.log("📥 Tải ảnh:", fullUrl);
+//             const { uri } = await FileSystem.downloadAsync(fullUrl, localPath);
+//             _uri = uri
+//           } else {
+//             console.log("⚡ Ảnh đã tồn tại:", localPath);
+//           }
+
+//           // 🔹 Tạo asset một lần
+//           const asset = await MediaLibrary.createAssetAsync(localPath);
+//           let album = await MediaLibrary.getAlbumAsync("SDI-Checklist");
+//           if (!album) {
+//             album = await MediaLibrary.createAlbumAsync("SDI-Checklist", asset, false);
+//           }
+//           await MediaLibrary.addAssetsToAlbumAsync(asset, album, false);
+
+//           // 🔹 Cập nhật lại SQLite
+//           await db.runAsync(
+//             "UPDATE detail_task SET mobile_path = ? WHERE id = ?",
+//             [asset.uri, item.id]
+//           );
+
+//           console.log('===uri', asset.uri);
+//           console.log('===localPath', localPath);
+
+//         } catch (err) {
+//           console.warn("❌ Lỗi tải ảnh:", item.image, err);
+//         }
+//       });
+
+//     // ==============================
+//     // 📄 TẢI PDF → LƯU LOCAL
+//     // ==============================
+//     const pdfPromises = object_task
+//       .filter((item) => !!item.pdf_path)
+//       .map(async (item) => {
+//         try {
+//           const fullUrl = await getFullUrl(item.pdf_path);
+//           const filename = item.pdf_path.split("/").pop();
+//           const localPath = `${FileSystem.documentDirectory}${filename}`;
+
+//           const fileInfo = await FileSystem.getInfoAsync(localPath);
+//           if (!fileInfo.exists) {
+//             console.log("📥 Tải PDF:", fullUrl);
+//             await FileSystem.downloadAsync(fullUrl, localPath);
+//           } else {
+//             console.log("⚡ PDF đã tồn tại:", localPath);
+//           }
+
+//           await db.runAsync(
+//             "UPDATE object_task SET mobile_pdf_path = ? WHERE id = ?",
+//             [localPath, item.id]
+//           );
+//         } catch (err) {
+//           console.warn("❌ Lỗi tải PDF:", item.pdf_path, err);
+//         }
+//       });
+
+//     await Promise.all([...imagePromises, ...pdfPromises]);
+//     showMessage("✅ Tải file & cập nhật đường dẫn hoàn tất!");
+//   } catch (err: any) {
+//     console.error("❌ Lỗi tổng thể khi đồng bộ file:", err);
+//     showMessage("❌ Lỗi đồng bộ file: " + err.message);
+//   }
+// };
+
+
+
+export const handleMediaSync = async (db: any, standard_task: any[], object_task: any[]) => {
+  try {
+    // ==============================
+    // 🖼️ TẢI ẢNH → LƯU LOCAL & CẬP NHẬT DB
+    // ==============================
+    const imagePromises = standard_task
+      .filter((item) => !!item.image)
+      .map(async (item) => {
+        try {
+          const fullUrl = await getFullUrl(item.image);
+          const filename = item.image.split("/").pop();
+          const localPath = `${FileSystem.documentDirectory}${filename}`;
+
+          // 🔹 Kiểm tra nếu file đã tồn tại -> bỏ qua tải lại
+          const fileInfo = await FileSystem.getInfoAsync(localPath);
+          if (!fileInfo.exists) {
+            console.log("📥 Đang tải ảnh:", fullUrl);
+            const { uri } = await FileSystem.downloadAsync(fullUrl, localPath);
+            console.log("✅ Tải xong:", uri);
+
+            // 🔹 Cập nhật path vào DB
+            await db.runAsync(
+              "UPDATE detail_task SET mobile_path = ? WHERE id = ?",
+              [uri, item.id]
+            );
+          } else {
+            console.log("⚡ Ảnh đã tồn tại:", localPath);
+            // 🔹 Đảm bảo DB có path đúng
+            await db.runAsync(
+              "UPDATE detail_task SET mobile_path = ? WHERE id = ?",
+              [localPath, item.id]
+            );
+          }
+        } catch (err) {
+          console.warn("❌ Lỗi tải ảnh:", item.image, err);
+        }
+      });
+
+    // ==============================
+    // 📄 TẢI PDF → LƯU LOCAL & CẬP NHẬT DB
+    // ==============================
+    const pdfPromises = object_task
+      .filter((item) => !!item.pdf_path)
+      .map(async (item) => {
+        try {
+          const fullUrl = await getFullUrl(item.pdf_path);
+          const filename = item.pdf_path.split("/").pop();
+          const localPath = `${FileSystem.documentDirectory}${filename}`;
+
+          const fileInfo = await FileSystem.getInfoAsync(localPath);
+          if (!fileInfo.exists) {
+            console.log("📥 Đang tải PDF:", fullUrl);
+            const { uri } = await FileSystem.downloadAsync(fullUrl, localPath);
+            console.log("✅ Tải PDF xong:", uri);
+
+            await db.runAsync(
+              "UPDATE object_task SET mobile_pdf_path = ? WHERE id = ?",
+              [uri, item.id]
+            );
+          } else {
+            console.log("⚡ PDF đã tồn tại:", localPath);
+            await db.runAsync(
+              "UPDATE object_task SET mobile_pdf_path = ? WHERE id = ?",
+              [localPath, item.id]
+            );
+          }
+        } catch (err) {
+          console.warn("❌ Lỗi tải PDF:", item.pdf_path, err);
+        }
+      });
+
+    // Chờ tất cả hoàn tất
+    await Promise.all([...imagePromises, ...pdfPromises]);
+
+    showMessage("✅ Đồng bộ file & cập nhật đường dẫn hoàn tất!");
+  } catch (err: any) {
+    console.error("❌ Lỗi tổng thể khi đồng bộ file:", err);
+    showMessage("❌ Lỗi đồng bộ file: " + err.message);
+  }
+};
+
+const getFullUrl = async (path?: string) => {
+  return `${await AsyncStorage.getItem("baseURL")}/images${path}`;
 };
 
 export const generateFileName = (taskName: string, position: string, objectName: string, ext: string) => {

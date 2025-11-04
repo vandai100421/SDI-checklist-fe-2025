@@ -359,7 +359,7 @@ export const createListDetailTask = async (data: any) => {
       useNewConnection: true,
     });
     const insertDetail_TaskPrepare = await db.prepareAsync(
-      "INSERT INTO `detail_task` (id, standard_id, object_task_id, process, mobile_path, image, note, count_ng ) VALUES ($id, $standard_id, $object_task_id, $process, $mobile_path, $image, $note, $count_ng);"
+      "INSERT INTO `detail_task` (id, standard_id, object_task_id, process, mobile_path, image, note, count_ng, checker ) VALUES ($id, $standard_id, $object_task_id, $process, $mobile_path, $image, $note, $count_ng, $checker);"
     );
     await Promise.all(
       data.map((item: any) => {
@@ -372,6 +372,7 @@ export const createListDetailTask = async (data: any) => {
           $image: item.image,
           $note: item.note,
           $count_ng: item.count_ng,
+          $checker: item.checker
         } as any);
       })
     );

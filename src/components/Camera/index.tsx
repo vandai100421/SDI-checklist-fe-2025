@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
-import { FC, useState } from "react";
+import * as MediaLibrary from "expo-media-library";
+import { FC, useEffect, useState } from "react";
 import { Button, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Box, Center, HStack } from "native-base";
@@ -16,6 +17,21 @@ type Props = {
 
 const CameraApp: FC<Props> = ({ id, data, closeModal, submit }) => {
   const [uri, setUri] = useState<string | null>(data);
+  const [hasMediaPermission, setHasMediaPermission] = useState(false);
+  // 🔹 Ask for gallery permission once
+  useEffect(() => {
+    (async () => {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "You need to grant media library permission to save photos."
+        );
+      } else {
+        setHasMediaPermission(true);
+      }
+    })();
+  }, []);
 
 
   async function requestPermissions() {
@@ -39,9 +55,47 @@ const CameraApp: FC<Props> = ({ id, data, closeModal, submit }) => {
     });
 
     if (!result.canceled) {
-      console.log(result.assets[0].uri); // The URI of the captured image
+      // console.log(result.assets[0].uri); // The URI of the captured image
       // You can now display or upload the image using the result.uri
-      setUri(result.assets[0].uri)
+      // setUri(result.assets[0].uri)
+      const photoUri = result.assets[0].uri;
+      console.log("Captured image:", photoUri);
+
+      if (hasMediaPermission) {
+        try {
+          // 1️⃣ Tạo asset và album
+          const asset = await MediaLibrary.createAssetAsync(photoUri);
+          await MediaLibrary.createAlbumAsync("SDI-Checklist", asset, false);
+
+          // 2️⃣ Đợi MediaStore cập nhật (Android cần delay)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // 3️⃣ Truy vấn lại asset mới nhất trong album SDI-Checklist
+          const album = await MediaLibrary.getAlbumAsync("SDI-Checklist");
+          if (album) {
+            const { assets } = await MediaLibrary.getAssetsAsync({
+              album: album.id,
+              sortBy: [[MediaLibrary.SortBy.creationTime, false]],
+              first: 1,
+            });
+
+            if (assets.length > 0) {
+              const latest = assets[0];
+              console.log("✅ Saved photo path:", latest.uri);
+              setUri(latest.uri);
+              return;
+            }
+          }
+
+          // fallback nếu không truy vấn được
+          setUri(photoUri);
+        } catch (err) {
+          console.error("❌ Error saving photo:", err);
+          Alert.alert("Error", "Failed to save photo to gallery.");
+        }
+      } else {
+        setUri(photoUri);
+      }
     }
   }
 
@@ -54,7 +108,7 @@ const CameraApp: FC<Props> = ({ id, data, closeModal, submit }) => {
     const clear = () => {
       setUri(null)
     }
-    
+
     return (
       <View>
         <Image
@@ -79,8 +133,8 @@ const CameraApp: FC<Props> = ({ id, data, closeModal, submit }) => {
     return (
       <Center>
         <HStack space={2}>
-        <Button title="Quay về"  onPress={handleCloseModal}/>
-        <Button title="Chụp ảnh"  onPress={takePicture}/>
+          <Button title="Quay về" onPress={handleCloseModal} />
+          <Button title="Chụp ảnh" onPress={takePicture} />
         </HStack>
       </Center>
     );

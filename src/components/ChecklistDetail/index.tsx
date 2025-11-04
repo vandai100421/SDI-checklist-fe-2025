@@ -214,9 +214,9 @@ const ChecklistDetail: React.FC<Props> = ({ id }) => {
             value={searchQuery}
             onChangeText={(text) => setSearchQuery(text)}
           />
-          <Button icon="plus" mode="contained" onPress={addNewRow}>
+          {isWeb && <Button icon="plus" mode="contained" onPress={addNewRow}>
             Thêm mới
-          </Button>
+          </Button>}
         </HStack>
         <View style={{ flex: 1 }}>
           <Card>
@@ -243,7 +243,7 @@ const ChecklistDetail: React.FC<Props> = ({ id }) => {
                     Phương pháp kiểm tra {sortColumn === 'method' && (sortAscending ? ' ▲' : ' ▼')}
                   </DataTable.Title>
 
-                  {isAdmin && (
+                  {isWeb && isAdmin && (
                     <DataTable.Title style={styles.center}>
                       Hành động
                     </DataTable.Title>
@@ -334,7 +334,7 @@ const ChecklistDetail: React.FC<Props> = ({ id }) => {
                           {item.content_method}
                         </Text>
                       </DataTable.Cell>
-                      {isAdmin && <DataTable.Cell style={styles.cell}>
+                      {isWeb && isAdmin && <DataTable.Cell style={styles.cell}>
                         <HStack>
                           <Button onPress={() => clickUpdate(item)}>
                             <Icon

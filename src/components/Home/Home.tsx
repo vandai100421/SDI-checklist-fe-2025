@@ -18,7 +18,7 @@ import { getAllObject } from "@components/Object/store";
 import { useFocusEffect } from "@react-navigation/native";
 import { AuthContext } from "@/src/provider/AuthProvider";
 import { Button, Switch } from "react-native-paper";
-import initializeDatabase, { deleteDatabase } from "@/src/database/db";
+import initializeDatabase, { deleteDatabase, deleteDatabase2 } from "@/src/database/db";
 import { asyncAllData, countCompleteTask, generateFileName, generateUniqueString } from "@utils/common";
 import taskApi from "@/src/apis/task";
 import { isWeb } from "@utils/deviceInfo";
@@ -246,7 +246,7 @@ const Home = () => {
 
 
   const handleResetDatabase = async () => {
-    await deleteDatabase();
+    await deleteDatabase2();
     await initializeDatabase();
   };
 
@@ -437,9 +437,9 @@ const Home = () => {
       <Box p={4}>
         <VStack space={4}>
           <View>
-            <Button icon="plus" mode="contained" onPress={handleResetDatabase}>
+            {/* <Button icon="plus" mode="contained" onPress={handleResetDatabase}>
               Reset DB
-            </Button>
+            </Button> */}
 
             {!isWeb && <View>
               <Text style={{ fontSize: 20, fontWeight: "bold" }}>
@@ -476,11 +476,11 @@ const Home = () => {
                 iconName="list-alt"
                 value={checklistState.data.get().length}
               />
-              <StatisticCard
+              {/* <StatisticCard
                 title="Số lượng người dùng"
                 iconName="users"
                 value={userState.data.get().length}
-              />
+              /> */}
             </HStack>
           </View>
 

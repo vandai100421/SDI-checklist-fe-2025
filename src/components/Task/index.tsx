@@ -399,9 +399,9 @@ const Task: React.FC<Props> = ({ routeToDetail }) => {
             value={searchQuery}
             onChangeText={(text) => setSearchQuery(text)}
           />
-          <Button icon="plus" mode="contained" onPress={handleOpenModalControl}>
+          {isWeb && <Button icon="plus" mode="contained" onPress={handleOpenModalControl}>
             Thêm mới nhiệm vụ
-          </Button>
+          </Button>}
         </HStack>
         <View style={{ flex: 1 }}>
           <Card>
@@ -485,7 +485,7 @@ const Task: React.FC<Props> = ({ routeToDetail }) => {
                             size={20}
                           />
                         </Button>
-                        {isConnected && isAdmin && <View style={{ display: "flex", flexDirection: "row" }}>
+                        {isConnected && isWeb && isAdmin && <View style={{ display: "flex", flexDirection: "row" }}>
                           {/* <Button onPress={() => clickUpdate(item)}>
                             <Icon
                               source="pencil-box"
