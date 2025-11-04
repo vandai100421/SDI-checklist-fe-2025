@@ -17,7 +17,7 @@ const getAccessToken = async () => {
 };
 
 // Lấy baseURL từ AsyncStorage hoặc localStorage
-const getBaseURL = async () => {
+export const getBaseURL = async () => {
   if (isWeb) {
     return "http://localhost:3001/api"; // Nếu không có, sử dụng default IP
   }

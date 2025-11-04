@@ -189,9 +189,9 @@ const Object: React.FC<Props> = ({ id }) => {
             value={searchQuery}
             onChangeText={(text) => setSearchQuery(text)}
           />
-          <Button icon="plus" mode="contained" onPress={handleOpenModalControl}>
+          {isWeb && <Button icon="plus" mode="contained" onPress={handleOpenModalControl}>
             Thêm mới
-          </Button>
+          </Button>}
         </HStack>
         <Card>
           {objectState.data.get().length > 0 ? (
@@ -227,7 +227,7 @@ const Object: React.FC<Props> = ({ id }) => {
                   Phòng quản lý {sortColumn === "manage" && (sortAscending ? " ▲" : " ▼")}
                 </DataTable.Title>
 
-                {isAdmin && (
+                {isWeb && isAdmin && (
                   <DataTable.Title style={styles.center}>
                     Hành động
                   </DataTable.Title>
@@ -249,7 +249,7 @@ const Object: React.FC<Props> = ({ id }) => {
                     <DataTable.Cell>
                       <Text numberOfLines={0} style={styles.textWrap}>{item.manage}</Text>
                     </DataTable.Cell>
-                    {isAdmin && <DataTable.Cell>
+                    {isWeb && isAdmin && <DataTable.Cell>
                       <HStack>
                         <Button onPress={() => clickUpdate(item)}>
                           <Icon source="pencil-box" color="warning" size={20} />

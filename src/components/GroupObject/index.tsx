@@ -203,13 +203,14 @@ const GroupObject: React.FC<Props> = ({ routeToDetail }) => {
               onChangeText={(text) => setSearchQuery(text)}
             />
             <HStack space={4}>
-              <Button
+              {isWeb && <Button
                 icon="plus"
                 mode="contained"
                 onPress={handleOpenModalControl}
               >
                 Thêm mới
               </Button>
+              }
               {Platform.OS === "web" && (
                 <Button
                   icon="plus"
@@ -280,7 +281,7 @@ const GroupObject: React.FC<Props> = ({ routeToDetail }) => {
                             size={20}
                           />
                         </Button>
-                        {isAdmin && <View style={{ display: "flex", flexDirection: "row" }}>
+                        {isWeb && isAdmin && <View style={{ display: "flex", flexDirection: "row" }}>
                           <Button onPress={() => clickUpdate(item)}>
                             <Icon source="pencil-box" color="warning" size={20} />
                           </Button>

@@ -298,8 +298,6 @@ export const getAllTaskObjectDetail = async (
         args as any
       );
 
-      console.log("==================", data);
-      
       taskObjectDetailStore.merge({
         data: data,
         pic: data[0].pic || "",

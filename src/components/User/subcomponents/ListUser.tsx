@@ -146,9 +146,9 @@ const User = () => {
           value={searchQuery}
           onChangeText={(text) => setSearchQuery(text)}
         />
-        <Button icon="plus" mode="contained" onPress={handleOpenModalControl}>
+        {isWeb && <Button icon="plus" mode="contained" onPress={handleOpenModalControl}>
           Thêm mới
-        </Button>
+        </Button>}
       </HStack>
       <Card>
         {userState.data.get().length > 0 ? (
@@ -172,7 +172,7 @@ const User = () => {
                 Bộ phận {sortColumn === "company" && (sortAscending ? " ▲" : " ▼")}
               </DataTable.Title>
 
-              <DataTable.Title style={styles.center}>Hành động</DataTable.Title>
+              {isWeb && <DataTable.Title style={styles.center}>Hành động</DataTable.Title>}
             </DataTable.Header>
 
 
@@ -196,7 +196,7 @@ const User = () => {
                   <DataTable.Cell style={styles.cell}>
                     {item.company}
                   </DataTable.Cell>
-                  <DataTable.Cell style={styles.cell}>
+                  {isWeb && <DataTable.Cell style={styles.cell}>
                     <HStack>
                       <Button onPress={() => clickUpdate(item)}>
                         <Icon source="pencil-box" color="warning" size={20} />
@@ -205,7 +205,7 @@ const User = () => {
                         <Icon source="close-box" color="orange" size={20} />
                       </Button>
                     </HStack>
-                  </DataTable.Cell>
+                  </DataTable.Cell>}
                 </DataTable.Row>
               ))}
 

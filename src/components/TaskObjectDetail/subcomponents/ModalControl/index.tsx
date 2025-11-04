@@ -1,15 +1,6 @@
-import { ScrollView, Text } from "react-native";
 import React from "react";
 import { Button, Divider, Modal, Portal } from "react-native-paper";
 import { HStack, View } from "native-base";
-import { TextInput } from "react-native-element-textinput";
-import { styles } from "@/src/styles/styles";
-import { globalLoading } from "@components/Lib/GlobalLoading";
-import TextComponent from "@components/Lib/Text";
-import { useFormik } from "formik";
-import { COLORS } from "@config";
-import ButtonComponent from "@components/Lib/Button";
-import { TypeStandard } from "@/src/types/standard";
 import CameraApp from "@components/Camera";
 
 interface Props {
